@@ -21,7 +21,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var shapeX: NSLayoutConstraint!
     @IBOutlet weak var shapeY: NSLayoutConstraint!
     
-    
+    @IBOutlet weak var gameObj: UIImageView!
     
     private var IsGameActive = false
     private var gameTimeLeft: TimeInterval = 0
@@ -29,6 +29,8 @@ class ViewController: UIViewController {
     private var gameTimer: Timer?
     private var timer: Timer?
     private var displayDuration: TimeInterval = 2
+    @IBOutlet weak var scoreLabel: UILabel!
+    private var score = 0
 
     @IBAction func ActionButtonTapped(_ sender: UIButton) {
         if(IsGameActive){
@@ -41,10 +43,8 @@ class ViewController: UIViewController {
 
     
     private func StartGame(){
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(timeInterval: displayDuration, target: self, selector: #selector(moveImage), userInfo: nil, repeats: true)
-        timer?.fire()
-        
+        score = 0
+        repositionImageWithTimer()
         gameTimer?.invalidate()
         gameTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(gameTimerTick), userInfo: nil, repeats: true)
         
@@ -53,15 +53,24 @@ class ViewController: UIViewController {
         IsGameActive = true
         updateUI()
     }
+    
     private func StopGame(){
         IsGameActive = false
         updateUI()
         gameTimer?.invalidate()
         timer?.invalidate()
+        scoreLabel.text = "Последний счет : \(score)"
+    }
+    
+    private func repositionImageWithTimer(){
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(timeInterval: displayDuration, target: self, selector: #selector(moveImage), userInfo: nil, repeats: true)
+        timer?.fire()
     }
     
     
     private func updateUI(){
+        gameObj.isHidden = !IsGameActive
         stepper.isEnabled = !IsGameActive
         if IsGameActive{
             actionButton.setTitle("э, стой", for: .normal)
@@ -82,10 +91,18 @@ class ViewController: UIViewController {
     }
     
     
+    @IBAction func objTapped(_ sender: UITapGestureRecognizer) {
+        repositionImageWithTimer()
+        guard isGameActive else { return }
+        score += 1
+    }
     
     @objc private func moveImage(){
-        let maxX = 100
-        let maxY = 100
+        let maxX = gameFieldView.bounds.maxX -
+            gameObj.frame.width
+        let maxY = gameFieldView.bounds.maxY -
+            gameObj.frame.height
+        
         shapeX.constant = CGFloat(arc4random_uniform(UInt32(maxX)))
         shapeY.constant = CGFloat(arc4random_uniform(UInt32(maxY)))
     }
@@ -100,7 +117,7 @@ class ViewController: UIViewController {
         gameFieldView.layer.borderWidth = 1
         gameFieldView.layer.borderColor = UIColor.gray.cgColor
         gameFieldView.layer.cornerRadius = 5
-        
+        updateUI()
         // Do any additional setup after loading the view.
     }
 
